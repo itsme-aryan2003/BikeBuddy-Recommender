@@ -21,32 +21,4 @@ HTML, CSS, JavaScript (Frontend)
 Python (Flask) or Pure JavaScript filtering logic
 
 JSON/CSV dataset of bikes
-             ┌───────────┐
-             │   Start   │
-             └─────┬─────┘
-                   │
-                   ▼
-        ┌────────────────────────┐
-        │  Input User Preferences │
-        └──────────┬─────────────┘
-                   │
-                   ▼
-        ┌────────────────────────┐
-        │   Filter Bike Dataset   │
-        └──────────┬─────────────┘
-                   │
-                   ▼
-        ┌────────────────────────┐
-        │ Generate Recommendations│
-        └──────────┬─────────────┘
-                   │
-                   ▼
-        ┌────────────────────────┐
-        │ Display Recommended     │
-        │        Bikes            │
-        └──────────┬─────────────┘
-                   │
-                   ▼
-             ┌───────────┐
-             │    End     │
-             └───────────┘
+             
