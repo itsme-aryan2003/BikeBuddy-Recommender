@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bike Recommender - Single Page</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-image: url('https://www.royalenfield.com/content/dam/royal-enfield-revamp/header/shop/configure/classic-650.webp');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      color: #fff;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: rgba(30,30,30,0.95);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(255,255,255,0.05);
+    }
+
+    label { display:block; margin-top:12px; font-weight:600; }
+
+    select, input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background:#1a877c;
+      color:white;
+      box-sizing: border-box;
+    }
+
+    .row { display:flex; gap:12px; }
+    .row > div { flex:1; }
+
+    .controls { margin-top:12px; display:flex; gap:12px; }
+    .controls button { flex:1; }
+
+    button.primary { background:#007bff; border:none; }
+    button.secondary { background:#ba2929; border:none; }
+
+    #resultsSection { display:none; margin-top:30px; }
+
+    .bike-card {
+      background:#1f1f1f;
+      padding:20px;
+      margin-bottom:20px;
+      border-radius:12px;
+    }
+
+    /* ✅ Corrected Image Code */
+    img {
+      width: 100%;
+      height: auto;
+      max-height: 300px;
+      object-fit: contain;
+      background: #000;
+      border-radius: 10px;
+      padding: 8px;
+      display: block;
+      margin: auto;
+    }
+
+    .back-btn {
+      padding:10px 18px;
+      background:#007bff;
+      border-radius:8px;
+      color:white;
+      text-decoration:none;
+      margin-bottom:20px;
+      display:inline-block;
+      cursor:pointer;
+    }
+
+    .tests { margin-top:12px; padding:12px; background:#151515; border-radius:8px; }
+    .pass { color:#7ef29f; }
+    .fail { color:#ff8a8a; }
+
+    @media (max-width:800px){ .row { flex-direction:column; } }
+  </style>
+</head>
+
+<body>
+  <div class="container" id="filterSection">
+    <h2>Advanced Bike Recommender (Single Page)</h2>
+
+    <label>Select Bike Brand:</label>
+    <select id="bikeType">
+      <option value="any">Any</option>
+      <option value="harley">Harley Davidson</option>
+      <option value="bullet">Royal Enfield</option>
+      <option value="java">Jawa</option>
+      <option value="ktm">KTM</option>
+      <option value="yamaha">Yamaha</option>
+      <option value="honda">Honda</option>
+      <option value="bajaj">Bajaj</option>
+      <option value="hero">Hero</option>
+    </select>
+
+    <label>Price Range (₹):</label>
+    <div class="row">
+      <div><label>Min Price</label><input type="number" id="priceMin" value="100000" /></div>
+      <div><label>Max Price</label><input type="number" id="priceMax" value="600000" /></div>
+    </div>
+
+    <label>Mileage Range (km/l):</label>
+    <div class="row">
+      <div><label>Min Mileage</label><input type="number" id="mileMin" value="20" /></div>
+      <div><label>Max Mileage</label><input type="number" id="mileMax" value="60" /></div>
+    </div>
+
+    <label>Engine CC Range:</label>
+    <div class="row">
+      <div><label>Min CC</label><input type="number" id="ccMin" value="100" /></div>
+      <div><label>Max CC</label><input type="number" id="ccMax" value="700" /></div>
+    </div>
+
+    <label>Top Speed Range (km/h):</label>
+    <div class="row">
+      <div><label>Min Speed</label><input type="number" id="speedMin" value="100" /></div>
+      <div><label>Max Speed</label><input type="number" id="speedMax" value="200" /></div>
+    </div>
+
+    <label>Sort By:</label>
+    <select id="sort">
+      <option value="none">None</option>
+      <option value="low-high">Price (Low → High)</option>
+      <option value="high-low">Price (High → Low)</option>
+      <option value="mileage">Mileage (High → Low)</option>
+      <option value="cc">Engine CC (High → Low)</option>
+      <option value="top">Top Speed (High → Low)</option>
+    </select>
+
+    <div class="controls">
+      <button class="primary" id="getBtn">Get Recommendations</button>
+      <button class="secondary" onclick="resetFilters()">Reset Filters</button>
+      <button class="secondary" onclick="runTests()">Run Tests</button>
+    </div>
+
+    <div class="tests" id="testResults" style="display:none;">
+      <strong>Automated test results:</strong>
+      <div id="testsOutput"></div>
+    </div>
+  </div>
+
+  <!-- RESULTS SECTION -->
+  <div class="container" id="resultsSection">
+    <h2>Recommended Bikes</h2>
+    <span class="back-btn" onclick="goBack()">⬅ Back</span>
+    <div id="results"></div>
+  </div>
+
+<script>
+  const bikes = [
+    { brand:"harley", name:"Harley Davidson Iron 883", price:400000, mileage:20, cc:883, top:170, img:"https://imgd.aeplcdn.com/476x268/bw/models/harley-davidson-iron-883-standard-60.jpg?20190103151915", info:"Cruiser with powerful torque." },
+    { brand:"harley", name:"Harley Davidson Street 750", price:1050000, mileage:25, cc:749, top:177, img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUmpaDSO0kbiKJn5vYD00vjvdBoVMpqU1cxg&s", info:"Modern Harley with refined performance." },
+
+    { brand:"bullet", name:"Royal Enfield Bullet 350", price:180000, mileage:38, cc:350, top:130, img:"https://img.etimg.com/thumb/msid-103326996,width-480,height-360,imgsize-103540,resizemode-75/bullet-350-launched.jpg", info:"Classic thumper." },
+    { brand:"bullet", name:"Royal Enfield Classic 350", price:210000, mileage:35, cc:350, top:125, img:"https://imgd.aeplcdn.com/1056x594/n/lwa0fhb_1869301.jpg?q=80", info:"Premium classic engine." },
+    { brand:"bullet", name:"Royal Enfield Interceptor 650", price:330000, mileage:24, cc:648, top:160, img:"https://imgd.aeplcdn.com/1056x594/n/kgq6seb_1777191.jpg?q=80", info:"650cc twin." },
+    { brand:"bullet", name:"Royal Enfield Continental GT 650", price:350000, mileage:25, cc:648, top:165, img:"https://www.royalenfield.com/content/dam/royal-enfield/united-kingdom/motorcycles/continental-gt/colours/studio-shots/new/ventura-storm/side-view.png", info:"Cafe racer styling." },
+
+    { brand:"java", name:"Jawa Forty Two", price:210000, mileage:35, cc:293, top:135, img:"https://images.financialexpressdigital.com/2019/07/jawa-forty-two-modified-cafe-racer.jpg?w=660", info:"Retro-modern." },
+    { brand:"java", name:"Jawa Perak", price:230000, mileage:30, cc:334, top:140, img:"https://newspatrolling.com/wp-content/uploads/2024/04/2024-Jawa-Perak-1-375x250.jpg", info:"Bobber-style." },
+
+    { brand:"ktm", name:"KTM Duke 250", price:260000, mileage:30, cc:250, top:148, img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTx0HNpfcBepVFU2OCe1ThacUJisOoCNjExjw&s", info:"Aggressive street bike." },
+    { brand:"ktm", name:"KKTMM Duke 390", price:330000, mileage:28, cc:373, top:167, img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUnewtq7SZElL06gXqsEq_YSFOqsnMvpgSdA&s", info:"Lightweight powerhouse." },
+    { brand:"ktm", name:"KTM RC 390", price:340000, mileage:25, cc:373, top:175, img:"https://i.pinimg.com/736x/45/30/bb/4530bb4317143f3222c3530dad02dd07.jpg", info:"Track-focused." },
+
+    { brand:"yamaha", name:"Yamaha MT-15", price:175000, mileage:45, cc:155, top:130, img:"https://imgd.aeplcdn.com/600x337/bw/ec/40333/Yamaha-MT-15-Side-159117.jpg?wm=0&q=75", info:"Lightweight engine." },
+    { brand:"yamaha", name:"Yamaha R15 V4", price:190000, mileage:40, cc:155, top:140, img:"https://www.timesbull.com/wp-content/uploads/2024/09/Yamaha-R15-V4-2-jpeg.webp", info:"Supersport machine." },
+    { brand:"yamaha", name:"Yamaha FZ25", price:160000, mileage:38, cc:249, top:135, img:"https://motomall.in/_next/image?url=https%3A%2F%2Fapi.motomall.in%2Fassets%2F7fff7bcd-8ddb-4017-81f7-810752d8b149.png&w=1920&q=75", info:"Reliable 250cc." },
+
+    { brand:"honda", name:"Honda CB350", price:190000, mileage:40, cc:348, top:135, img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIaxQY1Mo9sP2EjD053Y-_CxszzQm_PhX0FQ&s", info:"Smooth Honda engine." },
+    { brand:"honda", name:"Honda H'ness CB350", price:210000, mileage:35, cc:348, top:140, img:"https://imgd.aeplcdn.com/1280x720/n/vuvqnfb_1824959.jpg", info:"Premium retro." },
+    { brand:"honda", name:"Honda CB500F", price:550000, mileage:28, cc:471, top:185, img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTBq3qKdHhHzFaN4WWnVTji_yZmcPNMNW6JQA&s", info:"Mid-weight streetfighter." },
+
+    { brand:"bajaj", name:"Bajaj Pulsar RS200", price:170000, mileage:35, cc:200, top:140, img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTw40s7VvlRgqbOTnYJ60n6BKCxfWBnd7-lmg&s", info:"Sports bike." },
+    { brand:"bajaj", name:"Bajaj Dominar 400", price:240000, mileage:27, cc:373, top:160, img:"https://gaadiwaadi.com/wp-content/uploads/2020/07/Modified-Bajaj-Dominar-K-Speed-1.jpg", info:"Touring machine." },
+    { brand:"bajaj", name:"Bajaj Pulsar N250", price:150000, mileage:40, cc:249, top:135, img:"https://static.toiimg.com/thumb/msid-108975743,width-400,resizemode-4/108975743.jpg", info:"Next-gen Pulsar." },
+
+    { brand:"hero", name:"Hero Xtreme 160R", price:150000, mileage:50, cc:163, top:120, img:"https://images.financialexpressdigital.com/2021/02/limitededition-md.jpg", info:"Efficient daily commuter." },
+    { brand:"hero", name:"Hero Karizma XMR", price:180000, mileage:35, cc:210, top:140, img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRSW8c4sMPTLKAqi07Ac2Z9EwFOmy2iRQoGdQ&s", info:"Aggressive performance." }
+  ];
+
+  function sortBikes(list, type) {
+    if (type === "low-high") list.sort((a,b)=>a.price-b.price);
+    if (type === "high-low") list.sort((a,b)=>b.price-a.price);
+    if (type === "mileage") list.sort((a,b)=>b.mileage-a.mileage);
+    if (type === "cc") list.sort((a,b)=>b.cc-a.cc);
+    if (type === "top") list.sort((a,b)=>b.top-a.top);
+    return list;
+  }
+
+  function recommendBike() {
+    const brand = document.getElementById("bikeType").value;
+
+    const priceMin = parseInt(document.getElementById("priceMin").value);
+    const priceMax = parseInt(document.getElementById("priceMax").value);
+
+    const mileMin = parseInt(document.getElementById("mileMin").value);
+    const mileMax = parseInt(document.getElementById("mileMax").value);
+
+    const ccMin = parseInt(document.getElementById("ccMin").value);
+    const ccMax = parseInt(document.getElementById("ccMax").value);
+
+    const speedMin = parseInt(document.getElementById("speedMin").value);
+    const speedMax = parseInt(document.getElementById("speedMax").value);
+
+    const sort = document.getElementById("sort").value;
+
+    let filtered = bikes.filter(b =>
+      (brand === "any" || b.brand === brand) &&
+      b.price >= priceMin && b.price <= priceMax &&
+      b.mileage >= mileMin && b.mileage <= mileMax &&
+      b.cc >= ccMin && b.cc <= ccMax &&
+      b.top >= speedMin && b.top <= speedMax
+    );
+
+    filtered = sortBikes(filtered, sort);
+
+    showResults(filtered);
+  }
+
+  function showResults(list){
+    document.getElementById('filterSection').style.display = 'none';
+    document.getElementById('resultsSection').style.display = 'block';
+
+    const resultsDiv = document.getElementById('results');
+    if(list.length === 0){
+      resultsDiv.innerHTML = '<p>No bikes found.</p>';
+      return;
+    }
+
+    resultsDiv.innerHTML = list.map(b => `
+      <div class="bike-card">
+        <h3>${b.name}</h3>
+        <img src="${b.img}" alt="${b.name}" />
+        <p><strong>Price:</strong> ₹${b.price.toLocaleString()}</p>
+        <p><strong>Mileage:</strong> ${b.mileage} km/l</p>
+        <p><strong>Engine:</strong> ${b.cc} cc</p>
+        <p><strong>Top Speed:</strong> ${b.top} km/h</p>
+        <p>${b.info}</p>
+      </div>
+    `).join('');
+  }
+
+  function goBack(){
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('filterSection').style.display = 'block';
+    document.getElementById('results').innerHTML = "";
+  }
+
+  function resetFilters(){
+    document.getElementById('bikeType').value = "any";
+    document.getElementById('priceMin').value = 100000;
+    document.getElementById('priceMax').value = 600000;
+    document.getElementById('mileMin').value = 20;
+    document.getElementById('mileMax').value = 60;
+    document.getElementById('ccMin').value = 100;
+    document.getElementById('ccMax').value = 700;
+    document.getElementById('speedMin').value = 100;
+    document.getElementById('speedMax').value = 200;
+    document.getElementById('sort').value = "none";
+  }
+
+  document.getElementById("getBtn").addEventListener("click", recommendBike);
+</script>
+
+</body>
+</html>
